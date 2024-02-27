@@ -1,0 +1,38 @@
+---
+title: "Project"
+format: html
+editor: visual
+---
+
+## LOADING LIBRARIES
+
+```{r}
+library(dplyr)
+library(quantmod)
+library(rvest)
+library(tidyquant)
+```
+
+Get the initial date for which data needs to be loaded
+
+```{r}
+get_months <- 6
+```
+
+```{r}
+today <- Sys.Date()
+date = today %m+% months(-get_months)
+print(date)
+```
+
+Pass the Ticker to get the data
+
+```{r}
+one_ticker = tq_get("^GSPC", from = "2023-08-01", to = "2024-02-01")
+one_ticker %>% 
+  head()
+```
+
+```{r}
+write.csv(one_ticker,"S&P500.csv")
+```
