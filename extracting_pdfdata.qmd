@@ -4,56 +4,56 @@ format: html
 editor: visual
 ---
 
-## Quarto
-
-Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
-
-## Running Code
-
-When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
-
-```{r}
-1 + 1
-```
-
-You can add options to executable code like this
-
-The `echo: false` option disables the printing of code (only output is displayed).
+## LOADING LIBRARIES
 
 ```{r}
 install.packages("pdftools")
 install.packages("tidyverse")
 library(pdftools)
 library(tidyverse)
-
 ```
 
 ```{r}
-
-
 # Set the path to the folder containing the PDFs
-folder_path <- "/Users/shivanisingh/Downloads/fed_press_releases"
+folder_path <- "C:/Users/admin/Documents/SentimentAnalysis/fed_press_releases"
 
 # List all PDF files in the folder
 pdf_files <- list.files(path = folder_path, pattern = "\\.pdf$", full.names = TRUE)
+```
 
-# Function to extract text from a single PDF
-extract_text_from_pdf <- function(pdf_file_path) {
-  pdf_text <- pdf_text(pdf_file_path)
-  return(pdf_text)
-}
+Initiate a list to store all reports in dataframes
 
-
+```{r}
+temp_dfs <- list()
 ```
 
 ```{r}
-# Apply the function to all PDF files and store the text in a list
-pdf_texts <- lapply(pdf_files, extract_text_from_pdf)
+for (file_path in pdf_files)
+{
+  # Extract text from the pdf
+  pdf_text <- pdf_text(file_path)
+  # Insert text into a df temporarily, R splits data by pages into indiviual rows automatically
+  temp_df <- data.frame(reports = pdf_text)
+  # Combine all page data into 1 string 
+  combined_string <- paste(temp_df$reports, collapse = " ")
+  
+  # Extract date from filename
+  date <- gsub(".*?(\\d{8}).*|.*?(\\d{8})[^0-9]", "\\1\\2", file_path)
+  date <- as.Date(date, format = "%Y%m%d")
+  # Create dataframe and append it to the list
+  temp_df <- data.frame(report = combined_string, date= date)
+  temp_dfs[[length(temp_dfs) + 1]] <- temp_df
+  }
+```
 
-# Optional: Convert the list to a data frame
-pdf_data <- data.frame(text = I(pdf_texts))
+Combine all dataframes into 1 single dataframe
 
-# View the extracted text data
-print(pdf_data)
+```{r}
+reports_df <- do.call(rbind, temp_dfs)
+```
 
+Write to csv (excel does not render data properly, to check the final df, open it in R-Studio itself)
+
+```{r}
+write.csv(reports_df,"reports.csv")
 ```
