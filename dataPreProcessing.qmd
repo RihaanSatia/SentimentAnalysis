@@ -12,18 +12,8 @@ library(quantmod)
 library(tidyquant)
 library(lubridate)
 library(skimr)
-```
+library(tidyr)
 
-Get the initial date for which data needs to be loaded
-
-```{r}
-get_months <- 6
-```
-
-```{r}
-today <- Sys.Date()
-date = today %m+% months(-get_months)
-print(date)
 ```
 
 Pass the Ticker to get the data
@@ -56,7 +46,7 @@ sp_data_selected
 sp_data_selected$date <- as.Date(sp_data_selected$date)
 class(sp_data_selected$date)
 
-fomc_data$date <- as.Date(fomc_data$date, format = "%B %d, %y")
+fomc_data$date <- as.Date(fomc_data$date, format = "%B %d, %Y")
 fomc_data$date
 ```
 
@@ -68,7 +58,7 @@ skim(merged_data)
 
 ```{r}
 names(merged_data)
-clean_data <- select(merged_data, date, X, release_text, adjusted)
+clean_data <- select(merged_data, date, release_text, adjusted)
 clean_data
 ```
 
@@ -88,5 +78,7 @@ clean_data <- clean_data %>%
 
 ```{r}
 #Creating csv file with cleaned data
-write.csv(clean_data, "cleaned_data.csv")
+write.csv(clean_data, "cleaned_data.csv", row.names=FALSE)
 ```
+
+#next steps continued in a different document

@@ -11,6 +11,7 @@ install.packages("pdftools")
 install.packages("tidyverse")
 library(pdftools)
 library(tidyverse)
+library(lubridate)
 ```
 
 ```{r}
@@ -56,4 +57,8 @@ Write to csv (excel does not render data properly, to check the final df, open i
 
 ```{r}
 write.csv(reports_df,"reports.csv")
+```
+
+```{r}
+reports_df[1,1]
 ```
