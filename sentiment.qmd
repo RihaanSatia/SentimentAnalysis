@@ -1,0 +1,99 @@
+---
+title: "sentiment"
+format: html
+editor: visual
+---
+
+## Quarto
+
+Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
+
+## Running Code
+
+When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
+
+```{r}
+library(tidyverse)
+library(tm)
+library(tidytext)
+library(stopwords)
+
+lexicon <- read.csv("Loughran-McDonald.csv")
+```
+
+```{r}
+lexicon
+```
+
+```{r}
+data <- read.csv('cleaned_data_final.csv')
+```
+
+```{r}
+data
+```
+
+```{r}
+# Calculate the lag, lead, and difference for S&P 500
+data <- data %>%
+  mutate(
+    lag_SP500 = lag(SP500_adjusted),
+    lead_SP500 = lead(SP500_adjusted),
+    diff_SP500 = lead_SP500 - lag_SP500
+  )
+
+# Calculate the lag, lead, and difference for Russell
+data <- data %>%
+  mutate(
+    lag_Russell = lag(Russell2000_adjusted), # Replace 'Russell' with the actual column name
+    lead_Russell = lead(Russell2000_adjusted), # Replace 'Russell' with the actual column name
+    diff_Russell = lead_Russell - lag_Russell # Replace 'Russell' with the actual column name
+  )
+
+data$diff_SP500 <- (data$diff_SP500/ data$lag_SP500) * 100
+
+data$diff_Russell <- (data$diff_Russell/ data$lag_Russell) * 100
+```
+
+```{r}
+positive_words <- lexicon %>% filter(Positive > 0) %>% pull(Word) %>% tolower()
+negative_words <- lexicon %>% filter(Negative > 0) %>% pull(Word) %>% tolower()
+```
+
+```{r}
+positive_words
+```
+
+```{r}
+clean_and_score_text <- function(merged_data, release_text) {
+  merged_data %>%
+    mutate(across(all_of(release_text), tolower)) %>%
+    unnest_tokens(output = word, input = all_of(release_text)) %>%
+    mutate(word = tolower(word)) %>%
+    print() %>%
+    anti_join(get_stopwords(), by = "word") %>%
+    group_by(date) %>%
+    summarize(
+      positive_score = sum(word %in% positive_words),
+      negative_score = sum(word %in% negative_words),
+      score = (positive_score - negative_score)/ (positive_score + negative_score),
+      .groups = 'drop'
+    )
+}
+
+# Sentiment scoring
+sentiment_scores <- clean_and_score_text(data, "release_text")
+sentiment_scores |>
+  arrange(desc(score))
+```
+
+```{r}
+# Merge sentiment scores with financial data
+final_data <- data %>%
+  select(date, SP500_adjusted, Russell2000_adjusted, lag_SP500, lead_SP500, diff_SP500, lag_Russell, lead_Russell, diff_Russell) %>%
+  left_join(sentiment_scores, by = "date")
+
+head(final_data)
+
+write_csv(final_data, "final_data_with_sentiment.csv")
+```
